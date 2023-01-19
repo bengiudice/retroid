@@ -1,5 +1,5 @@
-use crate::components::Enemy;
-use crate::{GameTextures, WinSize, BASE_SPEED, PLAYER_SIZE, SPRITE_SCALE, TIME_STEP};
+use crate::components::{Enemy, SpriteSize};
+use crate::{GameTextures, WinSize, ENEMY_SIZE, SPRITE_SCALE};
 use bevy::prelude::*;
 use rand::prelude::*;
 
