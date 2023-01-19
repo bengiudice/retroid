@@ -1,5 +1,7 @@
+use crate::player::PlayerPlugin;
 use bevy::prelude::*;
 
+mod components;
 mod player;
 
 #[derive(Resource)]
@@ -29,8 +31,8 @@ fn main() {
             },
             ..default()
         }))
+        .add_plugin(PlayerPlugin)
         .add_startup_system(setup_system)
-        .add_startup_system_to_stage(StartupStage::PostStartup, player_spawn_system)
         .run()
 }
 
@@ -53,5 +55,3 @@ fn setup_system(mut cmds: Commands, mut windows: ResMut<Windows>, asset_server: 
     };
     cmds.insert_resource(game_textures);
 }
-
-

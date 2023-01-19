@@ -1,5 +1,15 @@
+use crate::components::{Player, Velocity};
 use crate::{GameTextures, WinSize, PLAYER_SIZE, SPRITE_SCALE};
 use bevy::prelude::*;
+
+pub struct PlayerPlugin;
+
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_startup_system_to_stage(StartupStage::PostStartup, player_spawn_system)
+            .add_system(player_movement_system);
+    }
+}
 
 fn player_spawn_system(
     mut cmds: Commands,
@@ -16,5 +26,15 @@ fn player_spawn_system(
             ..default()
         },
         ..default()
-    });
+    })
+    .insert(Player)
+    .insert(Velocity { x: 1., y: 0. });
+}
+
+fn player_movement_system(mut q: Query<(&Velocity, &mut Transform), With<Player>>) {
+    for (velocity, mut transform) in q.iter_mut() {
+        let translation = &mut transform.translation;
+        translation.x += velocity.x;
+        translation.y += velocity.y;
+    }
 }
