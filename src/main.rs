@@ -19,13 +19,19 @@ fn main() {
         .run()
 }
 
-fn setup_system(mut cmds: Commands) {
+fn setup_system(mut cmds: Commands, mut windows: ResMut<Windows>, asset_server: Res<AssetServer>) {
     cmds.spawn(Camera2dBundle::default());
 
+    let window = windows.get_primary_mut().unwrap();
+    window.set_position(MonitorSelection::Current, IVec2::new(2780, 4900));
+    let window_width = window.width();
+    let window_height = window.height();
+    let bottom = -window_height / 2.;
+
     cmds.spawn(SpriteBundle {
-        sprite: Sprite {
-            color: Color::rgb(0.25, 0.25, 0.75),
-            custom_size: Some(Vec2::new(150., 150.)),
+        texture: asset_server.load(PLAYER_SPRITE),
+        transform: Transform {
+            translation: Vec3::new(0., bottom + PLAYER_SIZE.1 / 2. + 5., 10.),
             ..default()
         },
         ..default()
