@@ -4,6 +4,9 @@ use bevy::prelude::*;
 mod components;
 mod player;
 
+const TIME_STEP: f32 = 1. / 60.;
+const BASE_SPEED: f32 = 500.;
+
 #[derive(Resource)]
 pub struct WinSize {
     pub w: f32,
@@ -13,11 +16,14 @@ pub struct WinSize {
 #[derive(Resource)]
 struct GameTextures {
     player: Handle<Image>,
+    player_laser: Handle<Image>,
 }
 
 const PLAYER_SPRITE: &str = "player_a_01.png";
 const PLAYER_SIZE: (f32, f32) = (144., 75.);
 const SPRITE_SCALE: f32 = 0.5;
+const PLAYER_LASER_SPRITE: &str = "laser_a_01.png";
+const PLAYER_LASER_SIZE: (f32, f32) = (9., 54.);
 
 fn main() {
     App::new()
@@ -52,6 +58,7 @@ fn setup_system(mut cmds: Commands, mut windows: ResMut<Windows>, asset_server: 
 
     let game_textures = GameTextures {
         player: asset_server.load(PLAYER_SPRITE),
+        player_laser: asset_server.load(PLAYER_LASER_SPRITE),
     };
     cmds.insert_resource(game_textures);
 }
