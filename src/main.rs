@@ -26,8 +26,8 @@ fn setup_system(mut cmds: Commands, mut windows: ResMut<Windows>, asset_server: 
     window.set_position(MonitorSelection::Current, IVec2::new(2780, 4900));
     let window_width = window.width();
     let window_height = window.height();
-    let bottom = -window_height / 2.;
 
+    let bottom = -window_height / 2.;
     cmds.spawn(SpriteBundle {
         texture: asset_server.load(PLAYER_SPRITE),
         transform: Transform {
