@@ -1,5 +1,10 @@
-use crate::components::{Enemy, SpriteSize, FromEnemy, Laser, Movable, Velocity};
-use crate::{EnemyCount, GameTextures, WinSize, ENEMY_MAX, ENEMY_SIZE, SPRITE_SCALE, ENEMY_LASER_SIZE};
+use core::f32::consts::PI;
+
+use crate::components::{Enemy, FromEnemy, Laser, Movable, SpriteSize, Velocity};
+use crate::{
+    EnemyCount, GameTextures, WinSize, ENEMY_LASER_SIZE, ENEMY_MAX, ENEMY_SIZE, SPRITE_SCALE,
+};
+use bevy::ecs::schedule::ShouldRun;
 use bevy::prelude::*;
 use bevy::time::FixedTimestep;
 use rand::prelude::*;
@@ -13,7 +18,19 @@ impl Plugin for EnemyPlugin {
                 .with_run_criteria(FixedTimestep::step(1.))
                 .with_system(enemy_spawn_system),
         )
-        .add_system(enemy_fire_system);
+        .add_system_set(
+            SystemSet::new()
+                .with_run_criteria(enemy_fire_criteria)
+                .with_system(enemy_fire_system),
+        );
+    }
+}
+
+fn enemy_fire_criteria() -> ShouldRun {
+    if thread_rng().gen_bool(1. / 60.) {
+        ShouldRun::Yes
+    } else {
+        ShouldRun::No
     }
 }
 
@@ -56,6 +73,7 @@ fn enemy_fire_system(
             texture: game_textures.enemy_laser.clone(),
             transform: Transform {
                 translation: Vec3::new(x, y - 15., 0.),
+                rotation: Quat::from_rotation_x(PI),
                 scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
                 ..default()
             },
@@ -64,7 +82,7 @@ fn enemy_fire_system(
         .insert(Laser)
         .insert(SpriteSize::from(ENEMY_LASER_SIZE))
         .insert(FromEnemy)
-        .insert(Movable {auto_despawn: true})
-        .insert(Velocity {x: 0., y: -1.});
+        .insert(Movable { auto_despawn: true })
+        .insert(Velocity { x: 0., y: -1. });
     }
 }

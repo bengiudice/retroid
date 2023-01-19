@@ -6,7 +6,8 @@ use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use bevy::utils::HashSet;
 use components::{
-    Enemy, Explosion, ExplosionTimer, ExplosionToSpawn, FromPlayer, Laser, SpriteSize,
+    Enemy, Explosion, ExplosionTimer, ExplosionToSpawn, FromEnemy, FromPlayer, Laser, Player,
+    SpriteSize,
 };
 
 mod components;
@@ -65,6 +66,7 @@ fn main() {
         .add_system(player_laser_hit_enemy_system)
         .add_system(explosion_animation_system)
         .add_system(explosion_to_spawn_system)
+        .add_system(enemy_laser_hit_player_system)
         .run()
 }
 
@@ -108,6 +110,35 @@ fn player_laser_hit_enemy_system(
 
                 cmds.spawn_empty()
                     .insert(ExplosionToSpawn(enemy_tf.translation.clone()));
+            }
+        }
+    }
+}
+
+fn enemy_laser_hit_player_system(
+    mut cmds: Commands,
+    laser_query: Query<(Entity, &Transform, &SpriteSize), (With<Laser>, With<FromEnemy>)>,
+    player_query: Query<(Entity, &Transform, &SpriteSize), With<Player>>,
+) {
+    if let Ok((player_entity, player_tf, player_size)) = player_query.get_single() {
+        let player_scale = Vec2::from(player_tf.scale.xy());
+
+        for (laser_entity, laser_tf, laser_size) in laser_query.iter() {
+            let laser_scale = Vec2::from(laser_tf.scale.xy());
+
+            let collision = collide(
+                laser_tf.translation,
+                laser_size.0 * laser_scale,
+                player_tf.translation,
+                player_size.0 * player_scale,
+            );
+
+            if let Some(_) = collision {
+                cmds.entity(player_entity).despawn();
+                cmds.entity(laser_entity).despawn();
+                cmds.spawn_empty()
+                    .insert(ExplosionToSpawn(player_tf.translation.clone()));
+                break;
             }
         }
     }
