@@ -1,10 +1,11 @@
 use crate::components::{Movable, Velocity};
+use crate::enemy::EnemyPlugin;
 use crate::player::PlayerPlugin;
 use bevy::prelude::*;
 
 mod components;
-mod player;
 mod enemy;
+mod player;
 
 const TIME_STEP: f32 = 1. / 60.;
 const BASE_SPEED: f32 = 500.;
@@ -47,9 +48,38 @@ fn main() {
             ..default()
         }))
         .add_plugin(PlayerPlugin)
+        .add_plugin(EnemyPlugin)
         .add_startup_system(setup_system)
         .add_system(moveable_system)
+        .add_system(player_laser_hit_enemy_system)
         .run()
+}
+
+fn player_laser_hit_enemy_system(
+    mut cmds: Commands,
+    laser_query: Query<(Entity, &Transform, &SpriteSize), (With<Laser>, With<FromPlayer>)>,
+    enemy_query: Query<(Entity, &Transform, &SpriteSize), With<Enemy>>,
+) {
+    for (laser_entity, laser_tf, laser_size) in laser_query.iter() {
+        let laser_scale = Vec2::from(laser_tf.scale.xy());
+
+        for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
+            let enemy_scale = Vec2::from(enemy_tf.scale.xy());
+
+            let collision = collide(
+                laser_tf.translation,
+                laser_size.0 * laser_scale,
+                enemy_tf.translation,
+                enemy_size.0 * enemy_scale,
+            );
+
+            if let Some(_) = collision {
+                cmds.entity(enemy_entity).despawn();
+
+                cmds.entity(laser_entity).despawn();
+            }
+        }
+    }
 }
 
 fn setup_system(mut cmds: Commands, mut windows: ResMut<Windows>, asset_server: Res<AssetServer>) {

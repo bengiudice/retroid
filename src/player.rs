@@ -29,6 +29,7 @@ fn player_spawn_system(
         ..default()
     })
     .insert(Player)
+    .insert(SpriteSize::from(PLAYER_SIZE))
     .insert(Movable { auto_despawn: true })
     .insert(Velocity { x: 0., y: 0. });
 }
@@ -54,6 +55,9 @@ fn player_fire_system(
                     },
                     ..default()
                 })
+                .insert(Laser)
+                .insert(FromPlayer)
+                .insert(SpriteSize::from(PLAYER_LASER_SIZE))
                 .insert(Velocity { x: 0., y: 1. })
                 .insert(Movable { auto_despawn: true });
             };
