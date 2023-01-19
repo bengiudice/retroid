@@ -1,3 +1,4 @@
+use crate::components::{Movable, Velocity};
 use crate::player::PlayerPlugin;
 use bevy::prelude::*;
 
@@ -39,6 +40,7 @@ fn main() {
         }))
         .add_plugin(PlayerPlugin)
         .add_startup_system(setup_system)
+        .add_system(moveable_system)
         .run()
 }
 
@@ -61,4 +63,16 @@ fn setup_system(mut cmds: Commands, mut windows: ResMut<Windows>, asset_server: 
         player_laser: asset_server.load(PLAYER_LASER_SPRITE),
     };
     cmds.insert_resource(game_textures);
+}
+
+fn moveable_system(
+    mut cmds: Commands,
+    win_size: Res<WinSize>,
+    mut q: Query<(Entity, &Velocity, &mut Transform, &Movable)>,
+) {
+    for (entity, velocity, mut transform, movable) in q.iter_mut() {
+        let translation = &mut transform.translation;
+        translation.x += velocity.x * TIME_STEP * BASE_SPEED;
+        translation.y += velocity.y * TIME_STEP * BASE_SPEED;
+    }
 }

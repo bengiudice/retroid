@@ -1,4 +1,4 @@
-use crate::components::{Player, Velocity};
+use crate::components::{Movable, Player, Velocity};
 use crate::{GameTextures, WinSize, BASE_SPEED, PLAYER_SIZE, SPRITE_SCALE, TIME_STEP};
 use bevy::prelude::*;
 
@@ -7,7 +7,6 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::PostStartup, player_spawn_system)
-            .add_system(player_movement_system)
             .add_system(player_keyboard_event_system)
             .add_system(player_fire_system);
     }
@@ -30,6 +29,7 @@ fn player_spawn_system(
         ..default()
     })
     .insert(Player)
+    .insert(Movable { auto_despawn: true })
     .insert(Velocity { x: 0., y: 0. });
 }
 
@@ -51,7 +51,9 @@ fn player_fire_system(
                     ..default()
                 },
                 ..default()
-            });
+            })
+            .insert(Velocity { x: 0., y: 1. })
+            .insert(Movable { auto_despawn: true });
         }
     }
 }
@@ -68,13 +70,5 @@ fn player_keyboard_event_system(
         } else {
             0.
         }
-    }
-}
-
-fn player_movement_system(mut q: Query<(&Velocity, &mut Transform), With<Player>>) {
-    for (velocity, mut transform) in q.iter_mut() {
-        let translation = &mut transform.translation;
-        translation.x += velocity.x * TIME_STEP * BASE_SPEED;
-        translation.y += velocity.y * TIME_STEP * BASE_SPEED;
     }
 }
