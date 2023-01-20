@@ -1,5 +1,3 @@
-use core::f32::consts::PI;
-
 use crate::components::{Enemy, FromEnemy, Laser, Movable, SpriteSize, Velocity};
 use crate::{
     EnemyCount, GameTextures, WinSize, ENEMY_LASER_SIZE, ENEMY_MAX, ENEMY_SIZE, SPRITE_SCALE,
@@ -7,6 +5,7 @@ use crate::{
 use bevy::ecs::schedule::ShouldRun;
 use bevy::prelude::*;
 use bevy::time::FixedTimestep;
+use core::f32::consts::PI;
 use rand::prelude::*;
 
 pub struct EnemyPlugin;

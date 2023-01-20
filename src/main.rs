@@ -32,6 +32,32 @@ struct GameTextures {
 #[derive(Resource)]
 struct EnemyCount(u32);
 
+#[derive(Resource)]
+struct PlayerState {
+    on: bool,
+    last_shot: f64,
+}
+
+impl Default for PlayerState {
+    fn default() -> Self {
+        Self {
+            on: false,
+            last_shot: -1.,
+        }
+    }
+}
+
+impl PlayerState {
+    pub fn shot(&mut self, time: f64) {
+        self.on = false;
+        self.last_shot = time;
+    }
+    pub fn spawned(&mut self) {
+        self.on = true;
+        self.last_shot = -1.;
+    }
+}
+
 const TIME_STEP: f32 = 1. / 60.;
 const BASE_SPEED: f32 = 500.;
 const PLAYER_SPRITE: &str = "player_a_01.png";
@@ -46,6 +72,7 @@ const ENEMY_LASER_SIZE: (f32, f32) = (17., 55.);
 const EXPLOSION_SHEET: &str = "explo_a_sheet.png";
 const EXPLOSION_LEN: usize = 16;
 const ENEMY_MAX: u32 = 2;
+const PLAYER_RESPAWN_DELAY: f64 = 2.;
 
 fn main() {
     App::new()
@@ -118,6 +145,8 @@ fn player_laser_hit_enemy_system(
 fn enemy_laser_hit_player_system(
     mut cmds: Commands,
     laser_query: Query<(Entity, &Transform, &SpriteSize), (With<Laser>, With<FromEnemy>)>,
+    mut player_state: ResMut<PlayerState>,
+    time: Res<Time>,
     player_query: Query<(Entity, &Transform, &SpriteSize), With<Player>>,
 ) {
     if let Ok((player_entity, player_tf, player_size)) = player_query.get_single() {
@@ -135,6 +164,7 @@ fn enemy_laser_hit_player_system(
 
             if let Some(_) = collision {
                 cmds.entity(player_entity).despawn();
+                player_state.shot(time.elapsed_seconds_f64());
                 cmds.entity(laser_entity).despawn();
                 cmds.spawn_empty()
                     .insert(ExplosionToSpawn(player_tf.translation.clone()));
