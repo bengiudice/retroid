@@ -26,7 +26,6 @@ fn player_spawn_system(
     mut player_state: ResMut<PlayerState>,
     time: Res<Time>,
     game_textures: Res<GameTextures>,
-    asset_server: Res<AssetServer>,
     win_size: Res<WinSize>,
 ) {
     let now = time.elapsed_seconds_f64();

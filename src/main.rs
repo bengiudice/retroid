@@ -73,6 +73,7 @@ const EXPLOSION_SHEET: &str = "explo_a_sheet.png";
 const EXPLOSION_LEN: usize = 16;
 const ENEMY_MAX: u32 = 2;
 const PLAYER_RESPAWN_DELAY: f64 = 2.;
+const FORMATION_MEMBERS_MAX: u32 = 2;
 
 fn main() {
     App::new()

@@ -1,7 +1,8 @@
+use self::formation::{Formation, FormationMaker};
 use crate::components::{Enemy, FromEnemy, Laser, Movable, SpriteSize, Velocity};
 use crate::{
-    EnemyCount, GameTextures, WinSize, BASE_SPEED, ENEMY_LASER_SIZE, ENEMY_MAX, ENEMY_SIZE,
-    SPRITE_SCALE, TIME_STEP,
+    EnemyCount, GameTextures, WinSize, ENEMY_LASER_SIZE, ENEMY_MAX, ENEMY_SIZE, SPRITE_SCALE,
+    TIME_STEP,
 };
 use bevy::ecs::schedule::ShouldRun;
 use bevy::prelude::*;
@@ -9,21 +10,24 @@ use bevy::time::FixedTimestep;
 use core::f32::consts::PI;
 use rand::prelude::*;
 
+mod formation;
+
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(1.))
-                .with_system(enemy_spawn_system),
-        )
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(enemy_fire_criteria)
-                .with_system(enemy_fire_system),
-        )
-        .add_system(enemy_movement_system);
+        app.insert_resource(FormationMaker::default())
+            .add_system_set(
+                SystemSet::new()
+                    .with_run_criteria(FixedTimestep::step(1.))
+                    .with_system(enemy_spawn_system),
+            )
+            .add_system_set(
+                SystemSet::new()
+                    .with_run_criteria(enemy_fire_criteria)
+                    .with_system(enemy_fire_system),
+            )
+            .add_system(enemy_movement_system);
     }
 }
 
@@ -39,14 +43,12 @@ fn enemy_spawn_system(
     mut cmds: Commands,
     game_textures: Res<GameTextures>,
     mut enemy_count: ResMut<EnemyCount>,
+    mut formation_maker: ResMut<FormationMaker>,
     win_size: Res<WinSize>,
 ) {
     if enemy_count.0 < ENEMY_MAX {
-        let mut rng = thread_rng();
-        let w_span = win_size.w / 2. - 100.;
-        let h_span = win_size.h / 2. - 100.;
-        let x = rng.gen_range(-w_span..w_span);
-        let y = rng.gen_range(-h_span..h_span);
+        let formation = formation_maker.make(&win_size);
+        let (x, y) = formation.start;
         cmds.spawn(SpriteBundle {
             texture: game_textures.enemy.clone(),
             transform: Transform {
@@ -57,6 +59,7 @@ fn enemy_spawn_system(
             ..Default::default()
         })
         .insert(Enemy)
+        .insert(formation)
         .insert(SpriteSize::from(ENEMY_SIZE));
 
         enemy_count.0 += 1;
@@ -88,15 +91,15 @@ fn enemy_fire_system(
     }
 }
 
-fn enemy_movement_system(time: Res<Time>, mut q: Query<&mut Transform, With<Enemy>>) {
-    let now = time.elapsed_seconds();
-    for mut transform in q.iter_mut() {
+fn enemy_movement_system(mut q: Query<(&mut Transform, &mut Formation), With<Enemy>>) {
+    for (mut transform, mut formation) in q.iter_mut() {
         let (x_org, y_org) = (transform.translation.x, transform.translation.y);
-        let max_distance = TIME_STEP * BASE_SPEED;
-        let dir: f32 = -1.;
-        let (x_pivot, y_pivot) = (0., 0.);
-        let (x_radius, y_radius) = (200., 130.);
-        let angle = dir * BASE_SPEED * TIME_STEP * now % 360. / PI;
+        let max_distance = TIME_STEP * formation.speed;
+        let dir: f32 = if formation.start.0 < 0. { 1. } else { -1. };
+        let (x_pivot, y_pivot) = formation.pivot;
+        let (x_radius, y_radius) = formation.radius;
+        let angle = formation.angle
+            + dir * formation.speed * TIME_STEP / (x_radius.min(y_radius) * PI / 2.);
         let x_dst = x_radius * angle.cos() + x_pivot;
         let y_dst = y_radius * angle.sin() + y_pivot;
         let dx = x_org - x_dst;
@@ -111,6 +114,9 @@ fn enemy_movement_system(time: Res<Time>, mut q: Query<&mut Transform, With<Enem
         let x = if dx > 0. { x.max(x_dst) } else { x.min(x_dst) };
         let y = y_org - dy * distance_ratio;
         let y = if dy > 0. { y.max(y_dst) } else { y.min(y_dst) };
+        if distance < max_distance * formation.speed / 20. {
+            formation.angle = angle;
+        }
         let translation = &mut transform.translation;
         (translation.x, translation.y) = (x, y);
     }
